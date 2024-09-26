@@ -1,6 +1,10 @@
 from email.policy import default
+from altair import Column
 import streamlit as st
 from statsbombpy import sb
+import pandas as pd
+from mplsoccer.pitch import Pitch
+import matplotlib.pyplot as plt
 
 @st.cache_data(ttl=60*60*24)
 def get_dataframe():
@@ -16,6 +20,30 @@ def get_match_data(competition_id : int, season_id: int):
 def get_match_events(match_id: int):
     match_events = sb.events(match_id=match_id)
     return match_events
+
+@st.cache_data(ttl=60*60*24)
+def get_event(match_id: int, event: str):
+    passes = sb.events(match_id=match_id, split=True, flatten_attrs=False)[event]
+    return passes
+
+def plot_shots(events):
+    pitch = Pitch(pitch_color='grass', line_color='white', stripe=True)
+    fig, ax = pitch.draw()
+
+    for index, row in events[events["type"] == "Shot"].iterrows():
+        pitch.scatter(x=row.location[0], y=row.location[1], ax=ax, color='red')
+
+    st.plotly_chart(fig)
+
+def plot_passes(events):
+    pitch = Pitch(pitch_color='grass', line_color='white', stripe=True)
+    fig, ax = pitch.draw()
+
+    for index, row in events[events["type"] == "Pass"].iterrows():
+       pitch.arrows(xstart=row.location[0], ystart=row.location[1], xend=row.pass_end_location[0], yend=row.pass_end_location[1], color='blue', alpha=0.5, ax=ax, width=1)
+
+
+    st.pyplot(fig)
 
 dataframe = get_dataframe()
 
@@ -45,15 +73,29 @@ selected_match = st.sidebar.selectbox(
 selected_match = matches[matches["match_date"] == selected_match]
 match_events = get_match_events(selected_match["match_id"].values[0])
 
-match_name = selected_match["home_team"][0] + " x " + selected_match["away_team"][0] + " - " + selected_match["match_date"][0]
+match_passes = get_event(selected_match["match_id"].values[0], "passes")
+match_shots = get_event(selected_match["match_id"].values[0], "shots")
 
+player_passes = pd.DataFrame(match_passes["player"].value_counts())
+player_shots = pd.DataFrame(match_shots["player"].value_counts())
+player_goals = pd.DataFrame(match_events[match_events["shot_outcome"] == "Goal"]["player"].value_counts())
+
+match_name = selected_match["home_team"][0] + " x " + selected_match["away_team"][0] + " - " + selected_match["match_date"][0]
 
 st.markdown("### Campeonato: " + selected_competition + " - Temporada: " + selected_season)
 st.markdown(f"##### {match_name}")
 st.markdown(f"##### Score {selected_match['home_score'][0]} - {selected_match['away_score'][0]}")
 
+st.write("### Passes por jogador")
+st.bar_chart(player_passes)
+
+st.write("### Chutes por jogador")
+st.bar_chart(player_shots)
+
+st.write("### Gols por jogador")
+st.bar_chart(player_goals)
+
 st.write(match_events)
 
-
-
-st.write(selected_match)
+plot_shots(match_events)
+plot_passes(match_events)
