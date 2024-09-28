@@ -1,10 +1,9 @@
-from email.policy import default
-from altair import Column
 import streamlit as st
 from statsbombpy import sb
 import pandas as pd
 from mplsoccer.pitch import Pitch
-import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 @st.cache_data(ttl=60*60*24)
 def get_dataframe():
@@ -32,6 +31,7 @@ def plot_shots(events):
 
     for index, row in events[events["type"] == "Shot"].iterrows():
         pitch.scatter(x=row.location[0], y=row.location[1], ax=ax, color='red')
+
 
     st.plotly_chart(fig)
 
@@ -86,16 +86,32 @@ st.markdown("### Campeonato: " + selected_competition + " - Temporada: " + selec
 st.markdown(f"##### {match_name}")
 st.markdown(f"##### Score {selected_match['home_score'][0]} - {selected_match['away_score'][0]}")
 
-st.write("### Passes por jogador")
-st.bar_chart(player_passes)
+pass_tab, kicks_tab, shots_tab = st.tabs(["Pesses x Jogador", "Chutes x Jogador", "Gols x Jogador"])
 
-st.write("### Chutes por jogador")
-st.bar_chart(player_shots)
+with pass_tab:
+    st.write("### Passes por jogador")
+    st.bar_chart(player_passes)
 
-st.write("### Gols por jogador")
-st.bar_chart(player_goals)
+with kicks_tab:
+    st.write("### Chutes por jogador")
+    st.bar_chart(player_shots)
+
+with shots_tab:
+    st.write("### Gols por jogador")
+    st.bar_chart(player_goals)
+
+kicks_spot_tab, pass_vectors_tab = st.tabs(["Chutes ao Gol", "Vetores de Passes"])
+
+with kicks_spot_tab:
+    st.title("Chutes ao Gol")
+    plot_shots(match_events)
+    st.text("Veja por onde a pressão na sua defesa está vindo")
+
+with pass_vectors_tab:
+    st.title("Vetores de Passes")
+    plot_passes(match_events)
+    st.text("Veja como a bola está se movendo no campo")
+
+kicks_per_time_tab = st.tabs(["Chutes ao Gol por tempo de partidad"])
 
 st.write(match_events)
-
-plot_shots(match_events)
-plot_passes(match_events)
