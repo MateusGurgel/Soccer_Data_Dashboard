@@ -1,6 +1,5 @@
 import streamlit as st
-import pandas as pd
-from modules.game_data import get_dataframe, get_match_events, get_event
+from modules.game_data import get_dataframe, get_match_events
 from components.plot_passes import plot_passes
 from components.plot_shots import plot_shots
 from components.match_selector import match_selector
@@ -8,7 +7,6 @@ from components.season_selector import season_selector
 from components.competition_selector import competition_selector
 from components.header import header
 from components.plot_warm_map import plot_warm_map
-from components.plot_game_stats import plot_game_stats
 from components.player_selector import player_selector
 
 
